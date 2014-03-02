@@ -20,6 +20,19 @@
 (defn printd [obj]
   (binding [*print-suppress-namespaces* true] (pprint obj)))
 
+(defn at0 [a]
+  (first a))
+
+(defn at1 [a]
+  (first (rest a)))
+
+(defn at2 [a]
+  (first (rest (rest a))))
+
+(defn at3 [a]
+  (first (rest (rest (rest a)))))
+
+
 ;
 ; These functions could be replaced with implementations
 ; that define different fields.  We have a field that
@@ -52,14 +65,14 @@
     (= a (zero))     b
     (= b (zero))     a
     (and (number? a) (number? b)) (+ a b)
-    :else            [`add a b]))
+    :else            (list `add a b)))
 
 ; Until we handle distributive property, answer isn't fully reduced
 (defn mul [a b]
   (cond
     (or (= a (zero)) (= b (zero))) (zero)
     (and (number? a) (number? b)) (* a b)
-    :else            [`mul a b]))
+    :else            (list `mul a b)))
 
 ;This is basically a macro to define subtraction as addition
 (defn sub [a b]
@@ -70,10 +83,11 @@
 (defn div [a b]
   (cond
     ; Computations should prevent this possibility
-    (= b (zero))     [`undefined]
+    (= b (zero))     (list `undefined)
+    (= a (zero))     a
     (= b (one))      a
     (and (number? a) (number? b)) (/ a b)
-    :else            [`div a b]))
+    :else            (list `div a b)))
 
 ;
 ; Now we can start to define geometry
@@ -86,7 +100,7 @@
 ;
 ; This is a type marker
 (defn point [a b]
-  [`point [`val a b]])
+  (list `point (list `val a b)))
 
 ; Lines are defined as
 ;   a*x + b*y + c = 0
@@ -112,54 +126,54 @@
 ;
 (defn line [a b c]
   (cond
-    (and (= a (zero)) (= b (zero)) (not (= c (zero)))) [`line `undefined]
-    :else                                         [`line [`val a b c]]))
+    (and (= a (zero)) (= b (zero)) (not (= c (zero)))) (list `line `undefined)
+    :else                                         (list `line (list `val a b c))))
 
 ; Constructors for when we need to symbolically represent a
 ; typed quadrance
 (defn quadrance [a]
-  [`quadrance a])
+  (list `quadrance a))
 
 ; Constructors for when we need to symbolically represent a
 ; typed quadrance
 (defn quadranceFromLength [a]
-  [`quadrance (mul a a)])
+  (list `quadrance (mul a a)))
 
 ; A type marker for a spread
 (defn spread [a]
-  [`spread a])
+  (list `spread a))
 
 ; Functions taking 2 point arguments use this
 (defn use2Points [pa pb f]
-  (def va (get pa 1))
-  (def vb (get pb 1))
-  (def x1 (get va 1))
-  (def x2 (get vb 1))
-  (def y1 (get va 2))
-  (def y2 (get vb 2))
+  (def va (at1 pa))
+  (def vb (at1 pb))
+  (def x1 (at1 va))
+  (def x2 (at1 vb))
+  (def y1 (at2 va))
+  (def y2 (at2 vb))
   (f x1 y1 x2 y2))
 
 ; Functions taking 2 line arguments use this
 (defn use2Lines [l1 l2 f]
-  (def ln1 (get l1 1))
-  (def ln2 (get l2 1))
-  (def a1  (get ln1 1))
-  (def b1  (get ln1 2))
-  (def c1  (get ln1 3))
-  (def a2  (get ln2 1))
-  (def b2  (get ln2 2))
-  (def c2  (get ln2 3))
+  (def ln1 (at1 l1))
+  (def ln2 (at1 l2))
+  (def a1  (at1 ln1))
+  (def b1  (at2 ln1))
+  (def c1  (at3 ln1))
+  (def a2  (at1 ln2))
+  (def b2  (at2 ln2))
+  (def c2  (at3 ln2))
   (f a1 b1 c1 a2 b2 c2))
 
 ; Functions using line and point arguments use this
 (defn useLinePoint [l1 pa f]
-  (def ln1 (get l1 1))
-  (def a1  (get ln1 1))
-  (def b1  (get ln1 2))
-  (def c1  (get ln1 3))
-  (def va  (get pa 1))
-  (def x   (get va 1))
-  (def y   (get va 2))
+  (def ln1 (at1 l1))
+  (def a1  (at1 ln1))
+  (def b1  (at2 ln1))
+  (def c1  (at3 ln1))
+  (def va  (at1 pa))
+  (def x   (at1 va))
+  (def y   (at2 va))
   (f a1 b1 c1 x y))
  
 ; Find the spread between 2 lines
@@ -175,7 +189,7 @@
       ;Undefined spread is parallel lines
       ;This isnt so much a failed computation as it
       ;is a test for parallel lines
-      (= d (zero)) [`spread `undefined]
+      (= d (zero)) (list `spread `undefined)
       :else        (spread (div n2 d))))
   (use2Lines l1 l2 _use2LinesSpread))
 
@@ -196,7 +210,7 @@
     (def b (sub x2 y1))
     (def c (sub (mul x1 y2) (mul x2 y1)))
     (cond
-      (and (= a (zero)) (= b (zero))) [`line `undefined]
+      (and (= a (zero)) (= b (zero))) (list `line `undefined)
       :else                           (line a b c)))
   (use2Points pa pb _use2PointsForLine)) 
 
@@ -209,7 +223,7 @@
     (def yn (sub (mul c1 a2) (mul c2 a1)))
     (def d  (sub (mul a1 b2) (mul a2 b1)))
     (cond
-      (= d (zero)) [`point `undefined]
+      (= d (zero)) (list `point `undefined)
       :else        (point (div xn d) (div yn d))))
   (use2Lines l1 l2 _use2LinesIntersection))
 
@@ -260,11 +274,8 @@
 
 ; Generate a new point
 (def lE (altitudeFromLinePoint lC pD))
+(def lP (parallelFromLinePoint lE pA))
 
-(printd pD)
-(printd (quadranceFrom2Points pA pC))
-(printd (spreadFrom2Lines lD lC))
-(printd (parallelFromLinePoint lE pA))
-
-
+(def answer (intersectionPointFrom2Lines lA lP))
+(printd answer)
 
