@@ -1,4 +1,4 @@
 #!/bin/bash
 
-java -cp clojure-1.6.0-alpha3.jar clojure.main rational.cj 
+java -cp clojure-1.6.0-alpha3.jar clojure.main rational.clj 
 
