@@ -75,7 +75,18 @@
 (defn spread [a]
   [`spread a])
 
-(defn spreadFrom2Lines [l1 l2]
+(defn use2Points [pa pb f]
+  (def va (get pa 1))
+  (def vb (get pb 1))
+  (def x (get va 1))
+  (def x2 (get vb 1))
+  (def y (get va 2))
+  (def y2 (get vb 2))
+  (def dx (sub x2 x))
+  (def dy (sub y2 y))
+  (f dx dy x y x2 y2))
+
+(defn use2Lines [l1 l2 f]
   (def ln1 (get l1 1))
   (def ln2 (get l2 1))
   (def a1 (get ln1 1))
@@ -84,53 +95,44 @@
   (def a2 (get ln2 1))
   (def b2 (get ln2 2))
   (def c2 (get ln2 3))
+  (f a1 b1 c1 a2 b2 c2))
+
+(defn use2LinesSpread [a1 b1 c1 a2 b2 c2]
   (def n (sub (mul a1 b2) (mul a2 b1)))
   (def n2 (mul n n))
   (def d1 (add (mul a1 a1) (mul b1 b1)))  
   (def d2 (add (mul a2 a2) (mul b2 b2)))
   (def d (mul d1 d2))
   (spread (div n2 d)))
-  
-(defn quadranceFrom2Points [pa pb]
-  (def va (get pa 1))
-  (def vb (get pb 1))
-  (def x (get va 1))
-  (def x2 (get vb 1))
-  (def y (get va 2))
-  (def y2 (get vb 2))
-  (def dx (sub x2 x))
-  (def dy (sub y2 y))
+
+(defn spreadFrom2Lines [l1 l2]
+  (use2Lines l1 l2 use2LinesSpread))
+
+(defn use2PointsForQuadrance [dx dy x y x2 y2]
   (add (mul dx dx) (mul dy dy)))
- 
-;Given 2 points, compute the line through them
-(defn lineFrom2Points [pa pb]
-  (def va (get pa 1))
-  (def vb (get pb 1))
-  (def x (get va 1))
-  (def x2 (get vb 1))
-  (def y (get va 2))
-  (def y2 (get vb 2))
-  (def dx (sub x2 x))
-  (def dy (sub y2 y))
+   
+(defn quadranceFrom2Points [pa pb]
+  (use2Points pa pb use2PointsForQuadrance))
+
+(defn use2PointsForLine [dx dy x y x2 y2]
   (def a (mul dy (minusone)))
   (def b dx)
   (def c (sub (mul dy x) (mul dx y)))
   (line a b c))
+ 
+;Given 2 points, compute the line through them
+(defn lineFrom2Points [pa pb]
+  (use2Points pa pb use2PointsForLine)) 
 
-;Given 2 lines, compute the intersection
-(defn intersectionPointFrom2Lines [l1 l2]
-  (def ln1 (get l1 1))
-  (def ln2 (get l2 1))
-  (def a1 (get ln1 1))
-  (def b1 (get ln1 2))
-  (def c1 (get ln1 3))
-  (def a2 (get ln2 1))
-  (def b2 (get ln2 2))
-  (def c2 (get ln2 3))
+(defn use2LinesIntersection [a1 b1 c1 a2 b2 c2]
   (def xn (sub (mul b1 c2) (mul b2 c1))) 
   (def yn (sub (mul c1 a2) (mul c2 a1)))
   (def d (sub (mul a1 b2) (mul a2 b1)))
   (point (div xn d) (div yn d)))
+
+;Given 2 lines, compute the intersection
+(defn intersectionPointFrom2Lines [l1 l2]
+  (use2Lines l1 l2 use2LinesIntersection))
 
 ;
 ; Define example problems to test the APIs 
