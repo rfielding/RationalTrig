@@ -43,34 +43,37 @@
 (declare minusone)
 
 (defn minusone [] -1)
-(defn one [] 1)
-(defn zero [] 0)
+(defn one      []  1)
+(defn zero     []  0)
 
 ; Until we handle distributive property, answer isn't fully reduced
 (defn add [a b]
   (cond
-    (= a (zero)) b
-    (= b (zero)) a
+    (= a (zero))     b
+    (= b (zero))     a
     (and (number? a) (number? b)) (+ a b)
-    :else [`add a b]))
+    :else            [`add a b]))
 
 ; Until we handle distributive property, answer isn't fully reduced
 (defn mul [a b]
   (cond
     (or (= a (zero)) (= b (zero))) (zero)
     (and (number? a) (number? b)) (* a b)
-    :else [`mul a b]))
+    :else            [`mul a b]))
 
 ;This is basically a macro to define subtraction as addition
 (defn sub [a b]
   (add a (mul (minusone) b)))
 
 ;Maybe refactor into inverse and multiply
+;Not quite sure how this API should handle div by zero
 (defn div [a b]
   (cond
-    (= b (one)) a
+    ; Computations should prevent this possibility
+    (= b (zero))     [`undefined]
+    (= b (one))      a
     (and (number? a) (number? b)) (/ a b)
-    :else [`div a b]))
+    :else            [`div a b]))
 
 ;
 ; Now we can start to define geometry
@@ -102,8 +105,15 @@
 ; And following that convention, the comparison can ignore c just
 ; to check that the lines are parallel.
 ;
+; Be sure to check the condition for an undefined line, when
+; the equation is impossible to satisfy for any (x,y), when
+; a=b=0 and c != 0
+;
+;
 (defn line [a b c]
-  [`line [`val a b c]])
+  (cond
+    (and (= a (zero)) (= b (zero)) (not (= c (zero)))) [`line `undefined]
+    :else                                         [`line [`val a b c]]))
 
 ; Constructors for when we need to symbolically represent a
 ; typed quadrance
@@ -123,72 +133,84 @@
 (defn use2Points [pa pb f]
   (def va (get pa 1))
   (def vb (get pb 1))
-  (def x (get va 1))
+  (def x1 (get va 1))
   (def x2 (get vb 1))
-  (def y (get va 2))
+  (def y1 (get va 2))
   (def y2 (get vb 2))
-  (def dx (sub x2 x))
-  (def dy (sub y2 y))
-  (f dx dy x y x2 y2))
+  (f x1 y1 x2 y2))
 
 ; Functions taking 2 line arguments use this
 (defn use2Lines [l1 l2 f]
   (def ln1 (get l1 1))
   (def ln2 (get l2 1))
-  (def a1 (get ln1 1))
-  (def b1 (get ln1 2))
-  (def c1 (get ln1 3))
-  (def a2 (get ln2 1))
-  (def b2 (get ln2 2))
-  (def c2 (get ln2 3))
+  (def a1  (get ln1 1))
+  (def b1  (get ln1 2))
+  (def c1  (get ln1 3))
+  (def a2  (get ln2 1))
+  (def b2  (get ln2 2))
+  (def c2  (get ln2 3))
   (f a1 b1 c1 a2 b2 c2))
 
 ; Functions using line and point arguments use this
 (defn useLinePoint [l1 pa f]
   (def ln1 (get l1 1))
-  (def a1 (get ln1 1))
-  (def b1 (get ln1 2))
-  (def c1 (get ln1 3))
-  (def va (get pa 1))
-  (def x (get va 1))
-  (def y (get va 2))
+  (def a1  (get ln1 1))
+  (def b1  (get ln1 2))
+  (def c1  (get ln1 3))
+  (def va  (get pa 1))
+  (def x   (get va 1))
+  (def y   (get va 2))
   (f a1 b1 c1 x y))
  
 ; Find the spread between 2 lines
+; Or return undefined if they are parallel
 (defn spreadFrom2Lines [l1 l2]
   (defn _use2LinesSpread [a1 b1 c1 a2 b2 c2]
-    (def n (sub (mul a1 b2) (mul a2 b1)))
+    (def n  (sub (mul a1 b2) (mul a2 b1)))
     (def n2 (mul n n))
     (def d1 (add (mul a1 a1) (mul b1 b1)))  
     (def d2 (add (mul a2 a2) (mul b2 b2)))
-    (def d (mul d1 d2))
-    (spread (div n2 d)))
+    (def d  (mul d1 d2))
+    (cond
+      ;Undefined spread is parallel lines
+      ;This isnt so much a failed computation as it
+      ;is a test for parallel lines
+      (= d (zero)) [`spread `undefined]
+      :else        (spread (div n2 d))))
   (use2Lines l1 l2 _use2LinesSpread))
 
 ; Find distance squared (quadrance) between two points   
 (defn quadranceFrom2Points [pa pb]
-  (defn _use2PointsForQuadrance [dx dy x y x2 y2]
+  (defn _use2PointsForQuadrance [x1 y1 x2 y2]
+    (def dx (sub x2 x1))
+    (def dy (sub y2 y1))
     (add (mul dx dx) (mul dy dy)))
   (use2Points pa pb _use2PointsForQuadrance))
 
  
 ;Given 2 points, compute the line through them
+;If points are the same, then the line is undefined
 (defn lineFrom2Points [pa pb]
-  (defn _use2PointsForLine [dx dy x y x2 y2]
-    (def a (mul dy (minusone)))
-    (def b dx)
-    (def c (sub (mul dy x) (mul dx y)))
-    (line a b c))
+  (defn _use2PointsForLine [x1 y1 x2 y2]
+    (def a (sub y1 y2))
+    (def b (sub x2 y1))
+    (def c (sub (mul x1 y2) (mul x2 y1)))
+    (cond
+      (and (= a (zero)) (= b (zero))) [`line `undefined]
+      :else                           (line a b c)))
   (use2Points pa pb _use2PointsForLine)) 
 
 
 ;Given 2 lines, compute the intersection
+; Return undefined if they are parallel
 (defn intersectionPointFrom2Lines [l1 l2]
   (defn _use2LinesIntersection [a1 b1 c1 a2 b2 c2]
     (def xn (sub (mul b1 c2) (mul b2 c1))) 
     (def yn (sub (mul c1 a2) (mul c2 a1)))
-    (def d (sub (mul a1 b2) (mul a2 b1)))
-    (point (div xn d) (div yn d)))
+    (def d  (sub (mul a1 b2) (mul a2 b1)))
+    (cond
+      (= d (zero)) [`point `undefined]
+      :else        (point (div xn d) (div yn d))))
   (use2Lines l1 l2 _use2LinesIntersection))
 
 ; Given a line and a point, find a new line that goes through the point,
