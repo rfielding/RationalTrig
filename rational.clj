@@ -83,7 +83,7 @@
 (defn div [a b]
   (cond
     ; Computations should prevent this possibility
-    (= b (zero))     (list `undefined)
+    (= b (zero))     (list `undefined a b)
     (= a (zero))     a
     (= b (one))      a
     (and (number? a) (number? b)) (/ a b)
@@ -99,8 +99,8 @@
 ; move around to fit constraints
 ;
 ; This is a type marker
-(defn point [a b]
-  (list `point (list `val a b)))
+(defn pointFromCoordinates [a b]
+  (list `point (list `coordinates a b)))
 
 ; Lines are defined as
 ;   a*x + b*y + c = 0
@@ -124,10 +124,10 @@
 ; a=b=0 and c != 0
 ;
 ;
-(defn line [a b c]
+(defn lineFromEquation [a b c]
   (cond
-    (and (= a (zero)) (= b (zero)) (not (= c (zero)))) (list `line `undefined)
-    :else                                         (list `line (list `val a b c))))
+    (and (= a (zero)) (= b (zero)) (not (= c (zero)))) (list `line `undefined a b c)
+    :else                                         (list `line (list `lineequation a b c))))
 
 ; Constructors for when we need to symbolically represent a
 ; typed quadrance
@@ -189,7 +189,7 @@
       ;Undefined spread is parallel lines
       ;This isnt so much a failed computation as it
       ;is a test for parallel lines
-      (= d (zero)) (list `spread `undefined)
+      (= d (zero)) (list `spread `undefined l1 l2)
       :else        (spread (div n2 d))))
   (use2Lines l1 l2 _use2LinesSpread))
 
@@ -210,8 +210,10 @@
     (def b (sub x2 y1))
     (def c (sub (mul x1 y2) (mul x2 y1)))
     (cond
-      (and (= a (zero)) (= b (zero))) (list `line `undefined)
-      :else                           (line a b c)))
+      ;The line is undefined, but the undefined line would exist
+      ;around pa if the distance to pb was infinitely small
+      (and (= a (zero)) (= b (zero))) (list `line `undefined pa pb)
+      :else                           (lineFromEquation a b c)))
   (use2Points pa pb _use2PointsForLine)) 
 
 
@@ -223,8 +225,8 @@
     (def yn (sub (mul c1 a2) (mul c2 a1)))
     (def d  (sub (mul a1 b2) (mul a2 b1)))
     (cond
-      (= d (zero)) (list `point `undefined)
-      :else        (point (div xn d) (div yn d))))
+      (= d (zero)) (list `point `undefined l1 l2)
+      :else        (pointFromCoordinates (div xn d) (div yn d))))
   (use2Lines l1 l2 _use2LinesIntersection))
 
 ; Given a line and a point, find a new line that goes through the point,
@@ -234,7 +236,7 @@
     (def a a1)
     (def b b1)
     (def c (mul (minusone) (add (mul a1 x) (mul b1 y))))
-    (line a b c))
+    (lineFromEquation a b c))
   (useLinePoint l1 pa _parallelLinePoint))
 
 ; Given a line and a point, find a line that goes through both
@@ -243,7 +245,7 @@
     (def a (mul (minusone) b1))
     (def b a1)
     (def c (sub (mul b1 x) (mul a1 y)))
-    (line a b c))
+    (lineFromEquation a b c))
   (useLinePoint l1 pa _altitudeLinePoint))
 
 ; TODO: given a reference line with a point on it and a spread,
@@ -259,23 +261,25 @@
 ;
 
 ; Some points, and the associated lines with making a triangle of them
-(def pA (point 0 0))
-(def pB (point 4 0))
-(def pC (point 4 3))
+(def pA (pointFromCoordinates 0 0))
+(def pB (pointFromCoordinates 4 0))
+(def pC (pointFromCoordinates 4 3))
 (def lC (lineFrom2Points pA pB))
 (def lB (lineFrom2Points pC pA))
 (def lA (lineFrom2Points pB pC))
 
-; Some line not associated with any points
-(def lD (line 3 -1 6))
-(def lF (line 5 2 9))
-; And a point generated at their intersection
-(def pD (intersectionPointFrom2Lines lD lF))
+(def lD (lineFromEquation 3 -1 6))
 
-; Generate a new point
+(def lF (lineFromEquation 5 2 9))
+(def pD (intersectionPointFrom2Lines lD lF))
 (def lE (altitudeFromLinePoint lC pD))
 (def lP (parallelFromLinePoint lE pA))
 
-(def answer (intersectionPointFrom2Lines lA lP))
-(printd answer)
+;(def answer (intersectionPointFrom2Lines lA lP))
+;(printd answer)
 
+(printd lA)
+(printd lP)
+(def problem1 `(intersectionPointFrom2Lines lA lP))
+(printd problem1)
+(printd (eval problem1))
