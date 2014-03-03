@@ -83,7 +83,7 @@
 (defn div [a b]
   (cond
     ; Computations should prevent this possibility
-    (= b (zero))     (list `undefined a b)
+    (= b (zero))     (list `undefined `div a b)
     (= a (zero))     a
     (= b (one))      a
     (and (number? a) (number? b)) (/ a b)
@@ -99,8 +99,8 @@
 ; move around to fit constraints
 ;
 ; This is a type marker
-(defn pointFromCoordinates [a b]
-  (list `point (list `coordinates a b)))
+(defn pointFromCoordinates [x y]
+  (list `point (list `xy x y)))
 
 ; Lines are defined as
 ;   a*x + b*y + c = 0
@@ -126,8 +126,8 @@
 ;
 (defn lineFromEquation [a b c]
   (cond
-    (and (= a (zero)) (= b (zero)) (not (= c (zero)))) (list `line `undefined a b c)
-    :else                                         (list `line (list `lineequation a b c))))
+    (and (= a (zero)) (= b (zero)) (not (= c (zero)))) (list `line `lineFromEquation `undefined a b c)
+    :else                                         (list `line (list `abc a b c))))
 
 ; Constructors for when we need to symbolically represent a
 ; typed quadrance
@@ -189,7 +189,7 @@
       ;Undefined spread is parallel lines
       ;This isnt so much a failed computation as it
       ;is a test for parallel lines
-      (= d (zero)) (list `spread `undefined l1 l2)
+      (= d (zero)) (list `spread `undefined `spreadFrom2Lines l1 l2)
       :else        (spread (div n2 d))))
   (use2Lines l1 l2 _use2LinesSpread))
 
@@ -225,7 +225,7 @@
     (def yn (sub (mul c1 a2) (mul c2 a1)))
     (def d  (sub (mul a1 b2) (mul a2 b1)))
     (cond
-      (= d (zero)) (list `point `undefined l1 l2)
+      (= d (zero)) (list `point `undefined `intersectionPointFrom2Lines l1 l2)
       :else        (pointFromCoordinates (div xn d) (div yn d))))
   (use2Lines l1 l2 _use2LinesIntersection))
 
