@@ -102,19 +102,15 @@
 
 ; Get the nth polynomial value for s
 (defn spreadpoly [n s]
-  ; (-4s)^p
-  (defn _d [s p]
+  (defn _d [s p] ; (-4s)^p
     (cond
       (= p 0) 1
       :else (* (* -4 s) (_d s (- p 1)))))
   (defn _iter [n s k]
-    ; n/(n-k)
-    (def a (/ n (- n k)))
-    ; 2n - 1 - k
-    (def b (- (- (* 2 n) 1) k))
+    (def a (/ n (- n k))) ; n/(n-k)
+    (def b (- (- (* 2 n) 1) k)) ; 2n - 1 - k
     (def c (nchoosek b k))
-    ; _d[n - 1 - k]
-    (def d (_d s (- (- n 1) k)))
+    (def d (_d s (- (- n 1) k))) ; _d[n - 1 - k]
     (* a c d))
   (defn spreadpolysum [n s k]
     (cond
