@@ -89,6 +89,38 @@
     (and (number? a) (number? b)) (/ a b)
     :else            (list `div a b)))
 
+(defn nchoosek [n k]
+  (defn _nchoosekiter [m i]
+    (/ (- (+ m 1 ) i) i))
+  (defn _nchoosek [n k i]
+    (cond
+      (< i 1) 1
+      :else (* 
+        (_nchoosekiter n i)
+        (_nchoosek n k (- i 1))))) 
+  (_nchoosek n k k))
+
+; Get the nth polynomial value for s
+(defn spreadpoly [n s]
+  ; (-4s)^p
+  (defn _d [s p]
+    (cond
+      (= p 0) 1
+      :else (* (* -4 s) (_d s (- p 1)))))
+  (defn _iter [n s k]
+    ; n/(n-k)
+    (def a (/ n (- n k)))
+    ; 2n - 1 - k
+    (def b (- (- (* 2 n) 1) k))
+    (def c (nchoosek b k))
+    ; _d[n - 1 - k]
+    (def d (_d s (- (- n 1) k)))
+    (* a c d))
+  (defn spreadpolysum [n s k]
+    (cond
+      (< k 0) 0
+      :else (+ (_iter n s k) (spreadpolysum n s (- k 1)))))    
+  (* s (spreadpolysum n s (- n 1))))
 ;
 ; Now we can start to define geometry
 ;
@@ -283,3 +315,5 @@
 (def problem1 `(intersectionPointFrom2Lines lA lP))
 (printd problem1)
 (printd (eval problem1))
+
+(printd (spreadpoly 3 (/ 2 5)))
