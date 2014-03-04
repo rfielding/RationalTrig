@@ -243,10 +243,11 @@
     (def a (sub y1 y2))
     (def b (sub x2 y1))
     (def c (sub (mul x1 y2) (mul x2 y1)))
+    (def _invalidLine (and (= a (zero)) (= b (zero))))
     (cond
       ;The line is undefined, but the undefined line would exist
       ;around pa if the distance to pb was infinitely small
-      (and (= a (zero)) (= b (zero))) (list `line `undefined pa pb)
+      _invalidLine (list `line `undefined pa pb)
       :else                           (lineFromEquation a b c)))
   (use2Points pa pb _use2PointsForLine)) 
 
