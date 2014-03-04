@@ -157,9 +157,11 @@
 ;
 ;
 (defn lineFromEquation [a b c]
+  (def _invalidLine
+    (and (= a (zero)) (= b (zero)) (not (= c (zero)))))
   (cond
-    (and (= a (zero)) (= b (zero)) (not (= c (zero)))) (list `line `lineFromEquation `undefined a b c)
-    :else                                         (list `line (list `abc a b c))))
+    _invalidLine (list `line `lineFromEquation `undefined a b c)
+    :else        (list `line (list `abc a b c))))
 
 ; Constructors for when we need to symbolically represent a
 ; typed quadrance
