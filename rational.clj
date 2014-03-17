@@ -20,6 +20,9 @@
 (defn printd [obj]
   (binding [*print-suppress-namespaces* true] (pprint obj)))
 
+(defn printdf [& args]
+  (binding [*print-suppress-namespaces* true] (apply printf args)))
+
 (defn at0 [a]
   (first a))
 
@@ -306,13 +309,17 @@
 (def lE (altitudeFromLinePoint lC pD))
 (def lP (parallelFromLinePoint lE pA))
 
-;(def answer (intersectionPointFrom2Lines lA lP))
-;(printd answer)
+;;
+;; Solve some problems
+;;
 
-(printd lA)
-(printd lP)
 (def problem1 `(intersectionPointFrom2Lines lA lP))
-(printd problem1)
-(printd (eval problem1))
+(def solution1 (eval problem1))
+(printdf "lA=%s lB=%s\nsolve:%s\nsolution:%s" lA lB problem1 solution1)
 
-(printd (spreadpoly 3 (/ 2 5)))
+(printdf "\n\n")
+
+(def problem2spread (/ 2 5))
+(def problem2 `(spreadpoly 3 problem2spread))
+(def solution2 (eval problem2))
+(printdf "problem2spread:%s\nsolve:%s\nsolution:%s\n" problem2spread problem2 solution2)
