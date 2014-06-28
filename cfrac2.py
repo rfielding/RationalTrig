@@ -42,11 +42,14 @@ def CFracApprox(val,cf):
 		if den <= 1024 and num <= 1024:
 			f = fractions.Fraction(den,num)
 			#error in cents 
-			err = - int ( (math.log(float(f),2) - math.log(val,2)) * 1200 )
+			err = -0.1 * int ( (math.log(float(f),2) - math.log(val,2)) * 12000 )
 			err2 = err*err
+			errStr = ""
+			if err2 > 1.0:
+				errStr = "(%2.1fc)" % err
 			#show anything within 30 cents
 			if err2 < 30*30:
-				answer.append( "%s(%d)" % (str(f),err) )
+				answer.append( "%s%s" % (str(f),errStr) )
 		if len(rcf) < 2:
 			break
 		rcf = rcf[1:]
