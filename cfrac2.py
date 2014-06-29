@@ -33,10 +33,7 @@ def CFracApprox(val,cf):
 		num = 0
 		den = 1
 		for t in rcf:
-			a = num
-			b = den
-			c = t.numerator
-			d = t.denominator
+			(a,b,c,d) = (num,den, t.numerator,t.denominator)
 			(num,den) = (a*d+c*b, b*d)
 			(num,den) = (den,num)
 		if den <= 1024 and num <= 1024:
